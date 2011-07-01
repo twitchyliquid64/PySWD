@@ -4,7 +4,9 @@ class DebugPort:
     def __init__ (self, swd):
         self.swd = swd
         # read the IDCODE
-        if self.idcode() != 0x1BA01477:
+        # Hugo: according to ARM DDI 0316D we should have 0x2B.. not 0x1B.., but 
+        # 0x1B.. is what upstream used, so leave it in here...
+        if self.idcode() not in [0x1BA01477, 0x2BA01477]:
             print "warning: unexpected idcode"
         # power shit up
         self.swd.writeSWD(False, 1, 0x54000000)
