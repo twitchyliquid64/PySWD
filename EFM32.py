@@ -23,29 +23,28 @@ class EFM32:
     # EFM32-specific stuff
 
     def flashUnlock (self):
-        ## unlock main flash
+        # unlock main flash
         self.ahb.writeWord(0x400C0000 + 0x008, 0x00000001) # MSC_WRITECTL.WREN <- 1
 
     def flashErase (self, flash_size):
-        ## start the mass erase
-        #self.ahb.writeWord(0x40022010, 0x00000204)
-        #self.ahb.writeWord(0x40022010, 0x00000244)
-        ## check the BSY flag
-        #while (self.ahb.readWord(0x4002200C) & 1) == 1:
-        #    print "waiting for erase completion..."
-        #    time.sleep(0.01)
-        #self.ahb.writeWord(0x40022010, 0x00000200)
-        pass
+        # erase page by page
+        for i in range(flash_size * 2):
+            self.ahb.writeWord(0x400C0000 + 0x010, 0x200 * i)  # MSC_ADDRB <- page address
+            self.ahb.writeWord(0x400C0000 + 0x00C, 0x00000001) # MSC_WRITECMD <- LADDRIM -- load address
+            self.ahb.writeWord(0x400C0000 + 0x00C, 0x00000002) # MSC_WRITECMD <- ERASEPAGE
+            time.sleep(0.03)
+            # poll the busy bit until it clears
+            while (self.ahb.readWord(0x400C0000 + 0x01C) & 0x1) == 1:
+                print "waiting for erase completion..."
+                time.sleep(0.01)
+            #print "Erased page %d" % i
 
-    def flashProgram (self):
+        # FIXME page-by-page erase is slooooow... implement whole-device erase instead
+        # This is done through the AAP (see ref. manual section 6.4)
+
+    def flashProgram (self, vals):
         #self.ahb.writeWord(0x40022010, 0x00000201)
-        pass
-
-    def flashWrite (self, vals):
         #efm32.ahb.writeHalfs(0x08000000, vals)
-        pass
-
-    def flashProgramEnd (self):
         #self.ahb.writeWord(0x40022010, 0x00000200)
         pass
 
