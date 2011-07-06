@@ -33,7 +33,7 @@ def main():
     else:
         print "Warning: unknown part"
         sys.exit()
-    print "Loading File: '%s'..." % sys.argv[1],
+    print "Loading '%s'..." % sys.argv[1],
     vals = loadFile(sys.argv[1])
     size = len(vals) * 4
     print "loaded %d bytes." % size
@@ -46,9 +46,8 @@ def main():
     efm32.flashUnlock()
     efm32.flashErase(flash_size)
     print "Programming Flash"
-    efm32.flashProgram()
-    efm32.flashWrite(vals)
-    efm32.flashProgramEnd()
+    efm32.flashProgram(vals)
+
     print "Resetting"
     efm32.sysReset()
 
