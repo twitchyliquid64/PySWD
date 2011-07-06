@@ -17,7 +17,7 @@ def loadFile(path):
     return arr.tolist()
 
 def main():
-    busPirate = PirateSWD("/dev/tty.usbserial-buspirat")
+    busPirate = PirateSWD("/dev/tty.usbserial-buspirat", vreg = True)
     debugPort = DebugPort(busPirate)
     efm32     = EFM32(debugPort)
 
