@@ -104,6 +104,13 @@ class MEM_AP:
         for val in data:
             self.dp.writeAP(self.apsel, 0x0C, val)
 
+    def writeBlockNonInc (self, adr, data):
+        self.csw(0, 2) # 32-bit non-incrementing addressing
+        self.dp.writeAP(self.apsel, 0x04, adr)
+        for val in data:
+            self.dp.writeAP(self.apsel, 0x0C, val)
+        self.csw(1, 2) # 32-bit auto-incrementing addressing
+
     def writeHalfs (self, adr, data):
         self.csw(2, 1) # 16-bit packed-incrementing addressing
         self.dp.writeAP(self.apsel, 0x04, adr)
