@@ -42,10 +42,10 @@ def main():
         sys.exit(1)
 
     efm32.halt()
-    print "Erasing Flash"
     efm32.flashUnlock()
+    print "Erasing Flash...",
     efm32.flashErase(flash_size)
-    print "Programming Flash"
+    print "Programming Flash...",
     efm32.flashProgram(vals)
 
     print "Resetting"

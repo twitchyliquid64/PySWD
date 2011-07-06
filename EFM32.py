@@ -1,4 +1,5 @@
 from SWDCommon import *
+import sys
 
 class EFM32:
     def __init__ (self, debugPort):
@@ -28,6 +29,7 @@ class EFM32:
 
     def flashErase (self, flash_size):
         # erase page by page
+        sys.stdout.write("   0.0 %") ; sys.stdout.flush()
         for i in range(flash_size * 2):
             self.ahb.writeWord(0x400C0000 + 0x010, 0x200 * i)  # MSC_ADDRB <- page address
             self.ahb.writeWord(0x400C0000 + 0x00C, 0x00000001) # MSC_WRITECMD.LADDRIM <- 1
@@ -38,6 +40,11 @@ class EFM32:
                 print "waiting for erase completion..."
                 time.sleep(0.01)
             #print "Erased page %d" % i
+            if i % 8 == 0:
+                sys.stdout.write("\b" * 7)
+                sys.stdout.write("%5.1f %%" % (100.0 * i / (flash_size * 2)))
+                sys.stdout.flush()
+        sys.stdout.write("\b" * 7 + "100.0 %\n")
 
         # FIXME page-by-page erase is slooooow... implement whole-device erase instead
         # This is done through the AAP (see ref. manual section 6.4)
@@ -55,6 +62,7 @@ class EFM32:
         # Write each word one by one .... SLOOOW!
         # (don't bother with checking the busy/status bits as this is so slow it's 
         # always ready before we are anyway)
+        sys.stdout.write("   0.0 %") ; sys.stdout.flush()
         addr = 0
         for i in vals:
             self.ahb.writeWord(0x400C0000 + 0x010, addr) # MSC_ADDRB <- starting address
@@ -62,4 +70,9 @@ class EFM32:
             self.ahb.writeWord(0x400C0000 + 0x018, i)    # MSC_WDATA <- data
             self.ahb.writeWord(0x400C0000 + 0x00C, 0x8)  # MSC_WRITECMD.WRITETRIG <- 1
             addr += 0x4
+            if addr % 0x40 == 0:
+                sys.stdout.write("\b" * 7)
+                sys.stdout.write("%5.1f %%" % (25.0 * addr / len(vals)))
+                sys.stdout.flush()
+        sys.stdout.write("\b" * 7 + "100.0 %\n")
 
