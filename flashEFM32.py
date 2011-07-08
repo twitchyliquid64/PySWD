@@ -36,7 +36,7 @@ def main():
     print "Loading '%s'..." % sys.argv[1],
     vals = loadFile(sys.argv[1])
     size = len(vals) * 4
-    print "loaded %d bytes." % size
+    print "%d bytes." % size
     if size / 1024.0 > flash_size:
         print "Firmware will not fit into flash!"
         sys.exit(1)
@@ -45,8 +45,12 @@ def main():
     efm32.flashUnlock()
     print "Erasing Flash...",
     efm32.flashErase(flash_size)
+    start_time = time.time()
     print "Programming Flash...",
     efm32.flashProgram(vals)
+    time_passed = time.time() - start_time
+    print "Programmed %d bytes in %.2f seconds (%.2f kB/sec)." % (size,
+            time_passed, (size / 1024.0) / time_passed)
 
     print "Resetting"
     efm32.sysReset()

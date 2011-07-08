@@ -21,8 +21,8 @@ class PirateSWD:
         if self.port.read(4) != "RAW1":
             raise SWDInitError("error initializing bus pirate")
         if vreg:
-            self.port.write(bytearray([0x48]))
-        self.port.write(bytearray([0x63,0x88]))
+            self.port.write(bytearray([0x48]))  # enable voltage regulator output
+        self.port.write(bytearray([0x63,0x88])) # set speed to 400 kHz, enable output pins
         self.clear(9999)
 
     # this is the fastest port-clearing scheme I could devise
