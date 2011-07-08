@@ -54,6 +54,7 @@ def main():
 
     print "Resetting"
     efm32.sysReset()
+    busPirate.tristatePins()
 
 if __name__ == "__main__":
     main()
