@@ -84,15 +84,17 @@ class NUC1XX(object):
     if ispcon & 0x40:
       print 'issueISPCOMMAND: ISP command failed: %08X' % ispcon
 
-  def writeFlash(self):
-    self.issueISPCommand(0x0001F000, 0x21, 0xDEADBEEF)
+  def writeFlash(self, addr, data):
+    print 'writing %s to %s' % (hex(addr), hex(data))
+    self.issueISPCommand(addr, 0x21, data)
 
-  def readFlash(self):
-    #self.issueISPCommand(0x0001F000, 0x00, 0x00)
-    print 'read: %s' % hex(self.ahb.readWord(0x0001F000))
+  def readFlash(self, addr):
+    self.issueISPCommand(addr, 0x00, 0x00)
+    print 'reading %s: %s' % (
+        hex(addr), hex(self.ahb.readWord(NUC1XX.ISPDAT_ADDR)))
 
   def eraseFlash(self):
-    self.issueISPCommand(0x0001f000, 0x22, 0x00)
+    self.issueISPCommand(0x00100000, 0x22, 0x00)
 
   def readRegister(self, register):
     self.ahb.writeWord(NUC1XX.DCRSR_ADDR, register)
