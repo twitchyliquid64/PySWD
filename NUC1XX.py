@@ -6,6 +6,7 @@
 
 __author__ = 'Pascal Hahn <ph@lxd.bz>'
 
+import binascii
 import SWDCommon
 
 class NotReadyForCommandException(Exception):
@@ -24,6 +25,8 @@ class NUC1XX(object):
   ISPDAT_ADDR = 0x5000C008
   ISPCMD_ADDR = 0x5000C00C
   ISPTRG_ADDR = 0x5000C010
+
+  IPRSTC_ADDR = 0x50000008
 
   DHCSR_ADDR = 0xE000EDF0
 
@@ -47,7 +50,7 @@ class NUC1XX(object):
     self.ahb.writeWord(NUC1XX.DHCSR_ADDR, 0xA05F0005)
 
   def reset(self):
-    self.ahb.writeWord(NUC1XX.AIRCR_ADDR, 0x05FA0004)
+    self.ahb.writeWord(NUC1XX.IPRSTC_ADDR, 0x01)
 
   def flashUnlock(self):
     if self.ahb.readBlock(NUC1XX.REGRWPROT_ADDR, 0x01) != [0x00]:
@@ -63,6 +66,10 @@ class NUC1XX(object):
 
     # enable ISP
     self.ahb.writeWord(NUC1XX.ISPCON_ADDR, 0x00000031)
+
+  def changeBS(self):
+    val = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
+    self.ahb.writeWord(NUC1XX.ISPCON_ADDR, val | 2)
 
   def issueISPCommand(self, adr, cmd, data):
     if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) != [0x00]:
@@ -88,10 +95,11 @@ class NUC1XX(object):
     print 'writing %s to %s' % (hex(addr), hex(data))
     self.issueISPCommand(addr, 0x21, data)
 
-  def readFlash(self, addr):
-    self.issueISPCommand(addr, 0x00, 0x00)
-    print 'reading %s: %s' % (
-        hex(addr), hex(self.ahb.readWord(NUC1XX.ISPDAT_ADDR)))
+  def readFlash(self, addr, length):
+    for counter in range(0, length, 8):
+      self.issueISPCommand(addr + counter, 0x00, 0x00)
+      print 'reading %s: %s' % (
+          hex(addr + counter), hex(self.ahb.readWord(NUC1XX.ISPDAT_ADDR)))
 
   def eraseFlash(self):
     self.issueISPCommand(0x00100000, 0x22, 0x00)
@@ -121,3 +129,16 @@ class NUC1XX(object):
     self.issueISPCommand(NUC1XX.CONFIG0_ADDR, 0x00, 0x00)
     print 'readConfig: %s' % hex(
         self.ahb.readWord(NUC1XX.CONFIG0_ADDR))
+
+  def writeBinToFlash(self, binstr):
+    start_addr = 0x00100000
+    print 'length: %i' % len(binstr)
+    for counter in range(0, len(binstr), 512):
+      self.writeFlash(
+          start_addr + counter,
+          int('0x%s' % binascii.b2a_hex(binstr[counter:counter + 512]), 16))
+
+def readFlashFile(filename):
+  flashfile = open(filename, 'rb')
+  return flashfile.read()
+
