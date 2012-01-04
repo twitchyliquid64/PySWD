@@ -92,7 +92,7 @@ class NUC1XX(object):
       print 'issueISPCOMMAND: ISP command failed: %08X' % ispcon
 
   def writeFlash(self, addr, data):
-    print 'writing %s to %s' % (hex(addr), hex(data))
+    print 'writing 0x%x to 0x%x' % (data, addr)
     self.issueISPCommand(addr, 0x21, data)
 
   def readFlash(self, addr, length):
