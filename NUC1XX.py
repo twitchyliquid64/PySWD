@@ -6,7 +6,7 @@
 
 __author__ = 'Pascal Hahn <ph@lxd.bz>'
 
-import binascii
+import struct
 import SWDCommon
 
 class NotReadyForCommandException(Exception):
@@ -103,8 +103,8 @@ class NUC1XX(object):
       data = self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
       print 'reading 0x%x: 0x%x' % (addr, data)
 
-  def eraseFlash(self):
-    self.issueISPCommand(0x00100000, 0x22, 0x00)
+  def eraseFlash(self, addr):
+    self.issueISPCommand(addr, 0x22, 0x00)
 
   def readRegister(self, register):
     self.ahb.writeWord(NUC1XX.DCRSR_ADDR, register)
@@ -134,11 +134,14 @@ class NUC1XX(object):
 
   def writeBinToFlash(self, binstr):
     start_addr = 0x00100000
+    assert len(binstr) % 4 == 0
     print 'length: %i' % len(binstr)
-    for counter in range(0, len(binstr), 512):
-      self.writeFlash(
-          start_addr + counter,
-          int('0x%s' % binascii.b2a_hex(binstr[counter:counter + 512]), 16))
+    for counter in range(0, len(binstr), 4):
+      addr = start_addr + counter
+      packed_data = binstr[counter:counter+4]
+      data = struct.unpack(">I", packed_data)[0] # TODO: maybe <I
+      self.eraseFlash(addr)
+      self.writeFlash(addr, data)
 
 def readFlashFile(filename):
   flashfile = open(filename, 'rb')
