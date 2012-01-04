@@ -95,11 +95,13 @@ class NUC1XX(object):
     print 'writing 0x%x to 0x%x' % (data, addr)
     self.issueISPCommand(addr, 0x21, data)
 
-  def readFlash(self, addr, length):
-    for counter in range(0, length, 8):
-      self.issueISPCommand(addr + counter, 0x00, 0x00)
-      print 'reading %s: %s' % (
-          hex(addr + counter), hex(self.ahb.readWord(NUC1XX.ISPDAT_ADDR)))
+  def readFlash(self, start_addr, length):
+    # TODO: maybe implement more efficient reading with only 1 dummy cmd
+    for counter in range(0, length, 4):
+      addr = start_addr + counter
+      self.issueISPCommand(addr, 0x00, 0x00)
+      data = self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
+      print 'reading 0x%x: 0x%x' % (addr, data)
 
   def eraseFlash(self):
     self.issueISPCommand(0x00100000, 0x22, 0x00)
