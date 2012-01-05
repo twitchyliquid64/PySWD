@@ -17,6 +17,7 @@ class UnlockFailedException(Exception):
   pass
 
 
+# page numbers refer to: tech. ref. manual NUC100/NUC120, V2.01
 class NUC1XX(object):
   CONFIG0_ADDR = 0x00300000
 
@@ -36,6 +37,17 @@ class NUC1XX(object):
   AIRCR_ADDR = 0xE000ED0C
 
   REGRWPROT_ADDR = 0x50000100
+
+  # pg 472:
+  APROM_START = 0
+  LDROM_START_ADDR = 0x00100000
+  LDROM_SIZE = 0x1000
+
+  USERCONFIG_START = 0x00300000
+  # pg 482:
+  ISPCMD_PAGE_ERASE = 0x22
+  ISPCMD_PROGRAM = 0x21
+  ISPCMD_READ = 0x20
 
   def __init__(self, debugport):
     self.ahb = SWDCommon.MEM_AP(debugport, 0)
@@ -93,18 +105,20 @@ class NUC1XX(object):
 
   def writeFlash(self, addr, data):
     print 'writing 0x%x to 0x%x' % (data, addr)
-    self.issueISPCommand(addr, 0x21, data)
+    self.issueISPCommand(addr, NUC1XX.ISPCMD_PROGRAM, data)
 
   def readFlash(self, start_addr, length):
     # TODO: maybe implement more efficient reading with only 1 dummy cmd
     for counter in range(0, length, 4):
       addr = start_addr + counter
+      # TODO: how does this differ from ISPCMD_READ?
       self.issueISPCommand(addr, 0x00, 0x00)
       data = self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
       print 'reading 0x%x: 0x%x' % (addr, data)
 
   def eraseFlash(self, addr):
-    self.issueISPCommand(addr, 0x22, 0x00)
+    #assert (addr & 0x1ff) == 0, "not the beginning of a flash page"
+    self.issueISPCommand(addr, NUC1XX.ISPCMD_PAGE_ERASE, 0x00)
 
   def readRegister(self, register):
     self.ahb.writeWord(NUC1XX.DCRSR_ADDR, register)
@@ -133,7 +147,7 @@ class NUC1XX(object):
         self.ahb.readWord(NUC1XX.CONFIG0_ADDR))
 
   def writeBinToFlash(self, binstr):
-    start_addr = 0x00100000
+    start_addr = NUC1XX.LDROM_START_ADDR
     assert len(binstr) % 4 == 0
     print 'length: %i' % len(binstr)
     for counter in range(0, len(binstr), 4):
