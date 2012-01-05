@@ -9,11 +9,20 @@ __author__ = 'Pascal Hahn <ph@lxd.bz>'
 import struct
 import SWDCommon
 
-class NotReadyForCommandException(Exception):
+
+class Error(Exception):
   pass
 
 
-class UnlockFailedException(Exception):
+class NotReadyForCommandException(Error):
+  pass
+
+
+class UnlockFailedException(Error):
+  pass
+
+
+class FlashDataInvalid(Error):
   pass
 
 
@@ -97,7 +106,6 @@ class NUC1XX(object):
       # successful execution
       if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) == [0x00]:
         break
-      # TODO: for now we assume success, actually verify it
     ispcon = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
     self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)
     if ispcon & 0x40:
@@ -148,7 +156,9 @@ class NUC1XX(object):
 
   def writeBinToFlash(self, binstr):
     start_addr = NUC1XX.LDROM_START_ADDR
-    assert len(binstr) % 4 == 0
+    if len(binstr) % 4 != 0:
+      raise FlashDataInvalid('Flash is not valid / divisible by 4')
+
     print 'length: %i' % len(binstr)
     for counter in range(0, len(binstr), 4):
       addr = start_addr + counter
@@ -160,4 +170,3 @@ class NUC1XX(object):
 def readFlashFile(filename):
   flashfile = open(filename, 'rb')
   return flashfile.read()
-
