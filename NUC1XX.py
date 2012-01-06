@@ -54,7 +54,11 @@ class NUC1XX(object):
     # pg 482:
     ISPCMD_PAGE_ERASE = 0x22
     ISPCMD_PROGRAM = 0x21
-    ISPCMD_READ = 0x20
+    ISPCMD_READ = 0x00
+
+    # pg 484f:
+    ISPCON_ISPFF = 0x40
+    ISPCON_BS = 0x02
 
     def __init__(self, debugport):
         self.ahb = SWDCommon.MEM_AP(debugport, 0)
@@ -86,9 +90,19 @@ class NUC1XX(object):
         # enable ISP
         self.ahb.writeWord(NUC1XX.ISPCON_ADDR, 0x00000031)
 
-    def changeBS(self):
-        val = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
-        self.ahb.writeWord(NUC1XX.ISPCON_ADDR, val | 2)
+    def changeBS(self, bs=1):
+        """toggle ISPCON.BS bit:
+        1 = boot from LDROM
+        0 = boot from APROM"""
+
+        ispcon = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
+
+        if bs == 1:
+            ispcon |= NUC1XX.ISPCON_BS
+        else:
+            ispcon &= ~NUC1XX.ISPCON_BS
+
+        self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)
 
     def issueISPCommand(self, adr, cmd, data):
         if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) != [0x00]:
@@ -105,8 +119,8 @@ class NUC1XX(object):
             if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) == [0x00]:
                 break
         ispcon = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
-        self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)
-        if ispcon & 0x40:
+        self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)  # TODO: why?
+        if ispcon & NUC1XX.ISPCON_ISPFF:
             print 'issueISPCOMMAND: ISP command failed: %08X' % ispcon
 
     def writeFlash(self, addr, data):
@@ -114,11 +128,11 @@ class NUC1XX(object):
         self.issueISPCommand(addr, NUC1XX.ISPCMD_PROGRAM, data)
 
     def readFlash(self, start_addr, length):
+
         # TODO: maybe implement more efficient reading with only 1 dummy cmd
         for counter in range(0, length, 4):
             addr = start_addr + counter
-            # TODO: how does this differ from ISPCMD_READ?
-            self.issueISPCommand(addr, 0x00, 0x00)
+            self.issueISPCommand(addr, NUC1XX.ISPCMD_READ, 0x00)
             data = self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
             print 'reading 0x%x: 0x%x' % (addr, data)
 
