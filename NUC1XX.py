@@ -2,8 +2,6 @@
 
 # SWD adapter for the Nucon NUC1XX series.
 
-# TODO: make it work, flash can't be written directly through ISP as it seems
-
 __author__ = 'Pascal Hahn <ph@lxd.bz>'
 
 import struct
@@ -61,7 +59,7 @@ class NUC1XX(object):
     def __init__(self, debugport):
         self.ahb = SWDCommon.MEM_AP(debugport, 0)
 
-    def halt (self):
+    def halt(self):
         self.ahb.writeWord(NUC1XX.DHCSR_ADDR, 0xA05F0003)
 
     def unhalt(self):
@@ -81,7 +79,7 @@ class NUC1XX(object):
             self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x59)
             self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x16)
             self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x88)
-        
+
         if self.ahb.readBlock(NUC1XX.REGRWPROT_ADDR, 0x01) != [0x01]:
             raise UnlockFailedException('flachUnlock: Unlock didn\'t work')
 
@@ -162,11 +160,7 @@ class NUC1XX(object):
         print 'length: %i' % len(binstr)
         for counter in range(0, len(binstr), 4):
             addr = start_addr + counter
-            packed_data = binstr[counter:counter+4]
-            data = struct.unpack(">I", packed_data)[0] # TODO: maybe <I
+            packed_data = binstr[counter:counter + 4]
+            data = struct.unpack(">I", packed_data)[0]  # TODO: maybe <I
             self.eraseFlash(addr)
             self.writeFlash(addr, data)
-
-def readFlashFile(filename):
-    flashfile = open(filename, 'rb')
-    return flashfile.read()

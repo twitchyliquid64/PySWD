@@ -2,15 +2,17 @@
 
 import NUC1XX
 import PirateSWD
-import serial
 import SWDCommon
 import sys
-import time
 
+
+def readWholeFile(filename):
+    flashfile = open(filename, 'rb')
+    return flashfile.read()
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-    flash_data = NUC1XX.readFlashFile(filename)
+    flash_data = readWholeFile(filename)
     pirate = PirateSWD.PirateSWD('/dev/ttyUSB0')
     debugport = SWDCommon.DebugPort(pirate)
     nuc1xx = NUC1XX.NUC1XX(debugport)
