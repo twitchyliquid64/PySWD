@@ -1,12 +1,18 @@
 import time
 
 class DebugPort:
-    IDCODES = (0x1BA01477, 0xBB11477)
+    ID_CODES = [
+        0x1BA01477, # willdonnelly
+        0x2BA01477, # hugovincent
+        0x0BB11477,  # NUC1xx
+        ]
     def __init__ (self, swd):
         self.swd = swd
         # read the IDCODE
-        if self.idcode() not in (0x1BA01477, 0xBB11477):
-          print "warning: unexpected idcode %s" % hex(self.idcode())
+        # Hugo: according to ARM DDI 0316D we should have 0x2B.. not 0x1B.., but 
+        # 0x1B.. is what upstream used, so leave it in here...
+        if self.idcode() not in DebugPort.ID_CODES:
+            print "warning: unexpected idcode"
         # power shit up
         self.swd.writeSWD(False, 1, 0x54000000)
         if (self.status() >> 24) != 0xF4:
@@ -102,6 +108,13 @@ class MEM_AP:
         self.dp.writeAP(self.apsel, 0x04, adr)
         for val in data:
             self.dp.writeAP(self.apsel, 0x0C, val)
+
+    def writeBlockNonInc (self, adr, data):
+        self.csw(0, 2) # 32-bit non-incrementing addressing
+        self.dp.writeAP(self.apsel, 0x04, adr)
+        for val in data:
+            self.dp.writeAP(self.apsel, 0x0C, val)
+        self.csw(1, 2) # 32-bit auto-incrementing addressing
 
     def writeHalfs (self, adr, data):
         self.csw(2, 1) # 16-bit packed-incrementing addressing

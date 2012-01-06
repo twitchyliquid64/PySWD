@@ -3,14 +3,14 @@ import serial
 from SWDErrors import *
 
 class PirateSWD:
-    def __init__ (self, f = "/dev/bus_pirate"):
+    def __init__ (self, f = "/dev/bus_pirate", vreg = False):
         self.port = serial.Serial(port = f, baudrate = 115200, timeout = 0.01)
-        self.resetBP()
+        self.resetBP(vreg = vreg)
         self.sendBytes([0xFF] * 8)
         self.sendBytes([0x79, 0xE7])
         self.resyncSWD()
 
-    def resetBP (self):
+    def resetBP (self, vreg = False):
         self.expected = 9999
         self.clear()
         self.port.write(bytearray([0x0F]))
@@ -20,7 +20,17 @@ class PirateSWD:
         self.port.write(bytearray([0x05]))
         if self.port.read(4) != "RAW1":
             raise SWDInitError("error initializing bus pirate")
-        self.port.write(bytearray([0x63,0x88]))
+        if vreg:
+            self.port.write(bytearray([0x48]))  # enable voltage regulator output
+        self.port.write(bytearray([0x63,0x88])) # set speed to 400 kHz, enable output pins
+        self.clear(9999)
+
+    def tristatePins(self):
+        self.clear(9999)
+        self.port.write(bytearray([0x00])) # exit RAW mode, unfortunately this kills power and generally resets a bunch of stuff
+        if self.port.read(5) != "BBIO1":
+            raise SWDInitError("unexpected response from bus pirate")
+        self.port.write(bytearray([0xc0, 0x5f])) # re-enable power, disable all output pins
         self.clear(9999)
 
     # this is the fastest port-clearing scheme I could devise

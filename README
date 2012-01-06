@@ -13,3 +13,6 @@ flash memory programmed with a sequence of words.
 There are some example firmware files for the STM32VLDISCOVERY board, as
 I mainly developed this code so I could program mine from Linux without
 bothering with the embedded bootloader.
+
+UPDATES:
+* Added 6/7/2011 by hugovincent: Energy Micro EFM32 support.
