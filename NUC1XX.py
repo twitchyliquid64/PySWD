@@ -51,6 +51,7 @@ class NUC1XX(object):
     LDROM_SIZE = 0x1000
 
     USERCONFIG_START = 0x00300000
+
     # pg 482:
     ISPCMD_PAGE_ERASE = 0x22
     ISPCMD_PROGRAM = 0x21
@@ -59,6 +60,8 @@ class NUC1XX(object):
     # pg 484f:
     ISPCON_ISPFF = 0x40
     ISPCON_BS = 0x02
+
+    FLASH_PAGESIZE = 0x200
 
     def __init__(self, debugport):
         self.ahb = SWDCommon.MEM_AP(debugport, 0)
@@ -137,7 +140,6 @@ class NUC1XX(object):
             print 'reading 0x%x: 0x%x' % (addr, data)
 
     def eraseFlash(self, addr):
-        #assert (addr & 0x1ff) == 0, "not the beginning of a flash page"
         self.issueISPCommand(addr, NUC1XX.ISPCMD_PAGE_ERASE, 0x00)
 
     def readRegister(self, register):
@@ -166,15 +168,22 @@ class NUC1XX(object):
         print 'readConfig: %s' % hex(
                 self.ahb.readWord(NUC1XX.CONFIG0_ADDR))
 
-    def writeBinToFlash(self, binstr):
-        start_addr = NUC1XX.LDROM_START_ADDR
+    def writeBinToFlash(self, binstr, start_addr = LDROM_START_ADDR):
+        assert start_addr % NUC1XX.FLASH_PAGESIZE == 0
+        # TODO: maybe we should only allow multiples of FLASH_PAGESIZE,
+        # so we won't erase data between the end of the data and
+        # the end of the flash page. Could possibly implement partial
+        # flash page updates somewhere else.
+
         if len(binstr) % 4 != 0:
             raise FlashDataInvalid('Flash is not valid / divisible by 4')
 
-        print 'length: %i' % len(binstr)
-        for counter in range(0, len(binstr), 4):
-            addr = start_addr + counter
-            packed_data = binstr[counter:counter + 4]
+        for offset in range(0, len(binstr), 4):
+            addr = start_addr + offset
+            if addr % NUC1XX.FLASH_PAGESIZE == 0:  # reached new page
+                self.eraseFlash(addr)
+
+            packed_data = binstr[offset:offset + 4]
             data = struct.unpack(">I", packed_data)[0]  # TODO: maybe <I
-            self.eraseFlash(addr)
+
             self.writeFlash(addr, data)
