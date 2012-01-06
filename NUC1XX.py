@@ -127,9 +127,7 @@ class NUC1XX(object):
             # successful execution
             if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) == [0x00]:
                 break
-        ispcon = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
-        self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)  # TODO: why?
-        if ispcon & NUC1XX.ISPCON_ISPFF:
+        if self.ahb.readWord(NUC1XX.ISPCON_ADDR) & NUC1XX.ISPCON_ISPFF:
             print 'issueISPCOMMAND: ISP command failed: %08X' % ispcon
 
     def writeFlash(self, addr, data):
