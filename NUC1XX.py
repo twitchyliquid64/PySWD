@@ -28,13 +28,17 @@ class FlashDataInvalid(Error):
 class NUC1XX(object):
     CONFIG0_ADDR = 0x00300000
 
+    # pg 483:
     ISPCON_ADDR = 0x5000C000
     ISPADR_ADDR = 0x5000C004
     ISPDAT_ADDR = 0x5000C008
     ISPCMD_ADDR = 0x5000C00C
     ISPTRG_ADDR = 0x5000C010
+    DFBADR_ADDR = 0x5000C014  # data flash base address
 
+    # pg 68:
     IPRSTC_ADDR = 0x50000008
+    REGWRPROT_ADDR = 0x50000100
 
     DHCSR_ADDR = 0xE000EDF0
 
@@ -43,7 +47,6 @@ class NUC1XX(object):
 
     AIRCR_ADDR = 0xE000ED0C
 
-    REGRWPROT_ADDR = 0x50000100
 
     # pg 472:
     APROM_START = 0
@@ -76,20 +79,23 @@ class NUC1XX(object):
         self.ahb.writeWord(NUC1XX.DHCSR_ADDR, 0xA05F0005)
 
     def reset(self):
+        # pg 72:
         self.ahb.writeWord(NUC1XX.IPRSTC_ADDR, 0x01)
 
-    def flashUnlock(self):
-        if self.ahb.readBlock(NUC1XX.REGRWPROT_ADDR, 0x01) != [0x00]:
-            print 'flashUnlock: Already unlocked'
+    def registerUnlock(self):
+        # pg 101:
+        if self.ahb.readBlock(NUC1XX.REGWRPROT_ADDR, 0x01) != [0x00]:
+            print 'registerUnlock: Already unlocked'
         else:
             # disable write protection
-            self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x59)
-            self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x16)
-            self.ahb.writeWord(NUC1XX.REGRWPROT_ADDR, 0x88)
+            self.ahb.writeWord(NUC1XX.REGWRPROT_ADDR, 0x59)
+            self.ahb.writeWord(NUC1XX.REGWRPROT_ADDR, 0x16)
+            self.ahb.writeWord(NUC1XX.REGWRPROT_ADDR, 0x88)
 
-        if self.ahb.readBlock(NUC1XX.REGRWPROT_ADDR, 0x01) != [0x01]:
+        if self.ahb.readBlock(NUC1XX.REGWRPROT_ADDR, 0x01) != [0x01]:
             raise UnlockFailedException('flachUnlock: Unlock didn\'t work')
 
+    def enableISP(self):
         # enable ISP
         self.ahb.writeWord(NUC1XX.ISPCON_ADDR, 0x00000031)
 
