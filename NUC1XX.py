@@ -24,6 +24,10 @@ class FlashDataInvalid(Error):
     pass
 
 
+class FlashAddressNotAlligned(Error):
+    pass
+
+
 # page numbers refer to: tech. ref. manual NUC100/NUC120, V2.01
 class NUC1XX(object):
     CONFIG0_ADDR = 0x00300000
@@ -190,7 +194,11 @@ class NUC1XX(object):
         return self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
 
     def writeBinToFlash(self, binstr, start_addr = LDROM_START_ADDR):
-        assert start_addr % NUC1XX.FLASH_PAGESIZE == 0
+        if not start_addr % NUC1XX.FLASH_PAGESIZE == 0:
+            raise FlashAddressNotAlligned(
+                    'Flash address %x is not aligned with the Pagesize of %i' % (
+                        start_addr, NUC1XX.FLASH_PAGESIZE))
+
         # TODO: maybe we should only allow multiples of FLASH_PAGESIZE,
         # so we won't erase data between the end of the data and
         # the end of the flash page. Could possibly implement partial
