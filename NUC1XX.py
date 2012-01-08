@@ -188,6 +188,6 @@ class NUC1XX(object):
                 self.eraseFlash(addr)
 
             packed_data = binstr[offset:offset + 4]
-            data = struct.unpack(">I", packed_data)[0]  # TODO: maybe <I
+            data = struct.unpack("<I", packed_data)[0]  # TODO: maybe <I
 
             self.writeFlash(addr, data)

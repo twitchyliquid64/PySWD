@@ -1,11 +1,11 @@
 import time
 
 class DebugPort:
-    ID_CODES = [
-        0x1BA01477, # willdonnelly
-        0x2BA01477, # hugovincent
-        0x0BB11477,  # NUC1xx
-        ]
+    ID_CODES = (
+        0x1BA01477, # EFM32
+        0x2BA01477, # STM32
+        0x0BB11477, # NUC1xx
+        )
     def __init__ (self, swd):
         self.swd = swd
         # read the IDCODE
