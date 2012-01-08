@@ -129,7 +129,7 @@ class NUC1XX(object):
         else:
             config0[0] &= ~NUC1XX.CONFIG0_CBS
 
-        self.eraseFlash(NUC1XX.CONFIG0_ADDR)
+        self.eraseFlashWords(NUC1XX.CONFIG0_ADDR, 1)
         self.writeFlashWords(NUC1XX.CONFIG0_ADDR, config0)
 
     def issueISPCommand(self, adr, cmd, data):
@@ -165,8 +165,10 @@ class NUC1XX(object):
             data.append(self.ahb.readWord(NUC1XX.ISPDAT_ADDR))
         return data
 
-    def eraseFlash(self, addr):
-        self.issueISPCommand(addr, NUC1XX.ISPCMD_PAGE_ERASE, 0x00)
+    def eraseFlashWords(self, start_addr, word_count):
+        for counter in range(word_count):
+            addr = start_addr + (counter * 4)
+            self.issueISPCommand(addr, NUC1XX.ISPCMD_PAGE_ERASE, 0x00)
 
     def readRegister(self, register):
         self.ahb.writeWord(NUC1XX.DCRSR_ADDR, register)
@@ -175,10 +177,6 @@ class NUC1XX(object):
     def writeRegister(self, register, data):
         self.ahb.writeWord(NUC1XX.DCRDR_ADDR, data)
         self.ahb.writeWord(NUC1XX.DCRSR_ADDR, register)
-
-    def readAllRom(self):
-        for addr in range(0xfffffffC, 0xffffffff, 0x04):
-            print hex(self.ahb.readWord(addr))
 
     def writeToRam(self):
         for addr in range(0x20000000, 0x200000d0, 0x04):
@@ -211,7 +209,7 @@ class NUC1XX(object):
         for offset in range(0, len(binstr), 4):
             addr = start_addr + offset
             if addr % NUC1XX.FLASH_PAGESIZE == 0:  # reached new page
-                self.eraseFlash(addr)
+                self.eraseFlashWords(addr, 1)
 
             packed_data = binstr[offset:offset + 4]
             data.append(struct.unpack("<I", packed_data)[0])
