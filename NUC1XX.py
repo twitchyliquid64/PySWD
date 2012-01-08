@@ -118,15 +118,15 @@ class NUC1XX(object):
         """toggle CONFIG0_CBS:
         True: boot from APROM
         False: boot from LDROM""" 
-        config0 = self.readFlash(NUC1XX.CONFIG0_ADDR, 1)[0]
+        config0 = self.readFlashWords(NUC1XX.CONFIG0_ADDR, 1)
 
         if cbs:
-            config0 |= NUC1XX.CONFIG0_CBS
+            config0[0] |= NUC1XX.CONFIG0_CBS
         else:
-            config0 &= ~NUC1XX.CONFIG0_CBS
+            config0[0] &= ~NUC1XX.CONFIG0_CBS
 
         self.eraseFlash(NUC1XX.CONFIG0_ADDR)
-        self.writeFlash(NUC1XX.CONFIG0_ADDR, config0)
+        self.writeFlashWords(NUC1XX.CONFIG0_ADDR, config0)
 
     def issueISPCommand(self, adr, cmd, data):
         if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) != [0x00]:
@@ -145,12 +145,14 @@ class NUC1XX(object):
         if self.ahb.readWord(NUC1XX.ISPCON_ADDR) & NUC1XX.ISPCON_ISPFF:
             print 'issueISPCOMMAND: ISP command failed: %08X' % ispcon
 
-    def writeFlash(self, addr, data):
-        print 'writing 0x%x to 0x%x' % (data, addr)
-        self.issueISPCommand(addr, NUC1XX.ISPCMD_PROGRAM, data)
+    def writeFlashWords(self, start_addr, words):
+        cur_addr = start_addr
+        for word in words:
+            print 'writing 0x%x to 0x%x' % (word, addr)
+            self.issueISPCommand(addr, NUC1XX.ISPCMD_PROGRAM, word)
+            cur_addr += 4
 
-    def readFlash(self, start_addr, word_count):
-        # TODO: implement writeFlash the same way, use an iterable of ints
+    def readFlashWords(self, start_addr, word_count):
         # TODO: maybe implement more efficient reading with only 1 dummy cmd
         data = []
         for counter in range(word_count):
@@ -197,14 +199,15 @@ class NUC1XX(object):
         if len(binstr) % 4 != 0:
             raise FlashDataInvalid('Flash is not valid / divisible by 4')
 
+        data = []
         for offset in range(0, len(binstr), 4):
             addr = start_addr + offset
             if addr % NUC1XX.FLASH_PAGESIZE == 0:  # reached new page
                 self.eraseFlash(addr)
 
             packed_data = binstr[offset:offset + 4]
-            data = struct.unpack("<I", packed_data)[0]  # TODO: maybe <I
+            data.append(struct.unpack("<I", packed_data)[0])
 
-            self.writeFlash(addr, data)
+        self.writeFlashWords(addr, data)
 
 # vim: set tabstop=4 softtabstop=4 shiftwidth=4 textwidth=80 smarttab expandtab:
