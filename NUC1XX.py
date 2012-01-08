@@ -47,7 +47,6 @@ class NUC1XX(object):
 
     AIRCR_ADDR = 0xE000ED0C
 
-
     # pg 472:
     APROM_START = 0
     LDROM_START_ADDR = 0x00100000
@@ -63,6 +62,9 @@ class NUC1XX(object):
     # pg 484f:
     ISPCON_ISPFF = 0x40
     ISPCON_BS = 0x02
+
+    # page 478
+    CONFIG0_CBS = 0x01 << 7
 
     FLASH_PAGESIZE = 0x200
 
@@ -99,19 +101,32 @@ class NUC1XX(object):
         # enable ISP
         self.ahb.writeWord(NUC1XX.ISPCON_ADDR, 0x00000031)
 
-    def changeBS(self, bs=1):
+    def changeBS(self, bs=True):
         """toggle ISPCON.BS bit:
-        1 = boot from LDROM
-        0 = boot from APROM"""
-
+        True: boot from LDROM
+        False: boot from APROM"""
         ispcon = self.ahb.readWord(NUC1XX.ISPCON_ADDR)
 
-        if bs == 1:
+        if bs:
             ispcon |= NUC1XX.ISPCON_BS
         else:
             ispcon &= ~NUC1XX.ISPCON_BS
 
         self.ahb.writeWord(NUC1XX.ISPCON_ADDR, ispcon)
+
+    def changeCBS(self, cbs=False):
+        """toggle CONFIG0_CBS:
+        True: boot from APROM
+        False: boot from LDROM""" 
+        config0 = self.readFlash(NUC1XX.CONFIG0_ADDR, 1)[0]
+
+        if cbs:
+            config0 |= NUC1XX.CONFIG0_CBS
+        else:
+            config0 &= ~NUC1XX.CONFIG0_CBS
+
+        self.eraseFlash(NUC1XX.CONFIG0_ADDR)
+        self.writeFlash(NUC1XX.CONFIG0_ADDR, config0)
 
     def issueISPCommand(self, adr, cmd, data):
         if self.ahb.readBlock(NUC1XX.ISPTRG_ADDR, 0x01) != [0x00]:
@@ -134,14 +149,15 @@ class NUC1XX(object):
         print 'writing 0x%x to 0x%x' % (data, addr)
         self.issueISPCommand(addr, NUC1XX.ISPCMD_PROGRAM, data)
 
-    def readFlash(self, start_addr, length):
-
+    def readFlash(self, start_addr, word_count):
+        # TODO: implement writeFlash the same way, use an iterable of ints
         # TODO: maybe implement more efficient reading with only 1 dummy cmd
-        for counter in range(0, length, 4):
-            addr = start_addr + counter
+        data = []
+        for counter in range(word_count):
+            addr = start_addr + (counter * 4)
             self.issueISPCommand(addr, NUC1XX.ISPCMD_READ, 0x00)
-            data = self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
-            print 'reading 0x%x: 0x%x' % (addr, data)
+            data.append(self.ahb.readWord(NUC1XX.ISPDAT_ADDR))
+        return data
 
     def eraseFlash(self, addr):
         self.issueISPCommand(addr, NUC1XX.ISPCMD_PAGE_ERASE, 0x00)
@@ -169,8 +185,7 @@ class NUC1XX(object):
 
     def readConfig(self):
         self.issueISPCommand(NUC1XX.CONFIG0_ADDR, 0x00, 0x00)
-        print 'readConfig: %s' % hex(
-                self.ahb.readWord(NUC1XX.CONFIG0_ADDR))
+        return self.ahb.readWord(NUC1XX.ISPDAT_ADDR)
 
     def writeBinToFlash(self, binstr, start_addr = LDROM_START_ADDR):
         assert start_addr % NUC1XX.FLASH_PAGESIZE == 0
@@ -191,3 +206,5 @@ class NUC1XX(object):
             data = struct.unpack("<I", packed_data)[0]  # TODO: maybe <I
 
             self.writeFlash(addr, data)
+
+# vim: set tabstop=4 softtabstop=4 shiftwidth=4 textwidth=80 smarttab expandtab:
