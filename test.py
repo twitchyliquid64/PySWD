@@ -22,7 +22,6 @@ if __name__ == '__main__':
     nuc1xx.registerUnlock()
     nuc1xx.enableISP()
     nuc1xx.writeBinToFlash(flash_data)
-    #nuc1xx.readAllRom()
     print 'config0 register: %x' % nuc1xx.readConfig()
     nuc1xx.changeCBS()
     print 'config0 register: %x' % nuc1xx.readConfig()
@@ -32,3 +31,5 @@ if __name__ == '__main__':
     #nuc1xx.writeFlash(0x00000000, 0xdeadbeef)
     #nuc1xx.readFlash(0x00100000, len(flash_data))
     #nuc1xx.readFlash(0x00000000)
+
+# vim: set tabstop=4 softtabstop=4 shiftwidth=4 textwidth=80 smarttab expandtab:
