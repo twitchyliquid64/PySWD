@@ -7,7 +7,7 @@ class PirateSWD:
         self.port = serial.Serial(port = f, baudrate = 115200, timeout = 0.01)
         self.resetBP(vreg = vreg)
         self.sendBytes([0xFF] * 8)
-        self.sendBytes([0x79, 0xE7])
+        self.sendBytes([0x79, 0xE7]) # activate SWD interface
         self.resyncSWD()
 
     def resetBP (self, vreg = False):
