@@ -1,6 +1,6 @@
 from SWDCommon import *
 
-flash_base = 0x40022004
+flash_base = 0x40023c00
 
 FLASH_PECR = flash_base+0x04
 FLASH_PEKEYR = flash_base+0x0C
