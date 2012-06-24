@@ -80,6 +80,7 @@ class MEM_AP:
         self.csw(1,2) # 32-bit auto-incrementing addressing
 
     def csw (self, addrInc, size):
+        """ Set control/status word register """
         self.dp.readAP(self.apsel, 0x00)
         csw = self.dp.readRB() & 0xFFFFFF00
         self.dp.writeAP(self.apsel, 0x00, csw + (addrInc << 4) + size)
@@ -117,6 +118,7 @@ class MEM_AP:
         self.csw(1, 2) # 32-bit auto-incrementing addressing
 
     def writeHalfs (self, adr, data):
+        """ Write half-words """
         self.csw(2, 1) # 16-bit packed-incrementing addressing
         self.dp.writeAP(self.apsel, 0x04, adr)
         for val in data:
