@@ -7,7 +7,7 @@ from SWDCommon import *
 from STM32 import *
 
 def loadFile(path):
-    arr = array.array('L')
+    arr = array.array('I')
     try:
         arr.fromfile(open(sys.argv[1], 'rb'), 1024*1024)
     except EOFError:
