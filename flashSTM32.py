@@ -29,7 +29,11 @@ def main():
     stm32.halt()
     print "Erasing Flash"
     stm32.flashUnlock()
-    stm32.flashErase()
+    stm32.programUnlock()
+    for addr in [0x08000000, 0x08000100, 0x08000200, 0x08001000]:
+        print "  Erasing sector %08x" % addr
+        stm32.flashErase(prog=True, addr=addr)
+
     print "Programming Flash"
     stm32.flashProgram()
     stm32.ahb.writeHalfs(0x08000000, vals)
