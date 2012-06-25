@@ -36,7 +36,7 @@ def main():
 
     print "Programming Flash"
     stm32.flashProgram()
-    stm32.ahb.writeHalfs(0x08000000, vals)
+    stm32.ahb.writeBlock(0x08000000, vals)
     stm32.flashProgramEnd()
     print "Resetting"
     stm32.sysReset()
