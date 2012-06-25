@@ -110,6 +110,7 @@ class MEM_AP:
     def writeBlock (self, adr, data):
         self.dp.writeAP(self.apsel, 0x04, adr)
         for val in data:
+            time.sleep(0.01)
             self.dp.writeAP(self.apsel, 0x0C, val)
 
     def writeBlockNonInc (self, adr, data):
