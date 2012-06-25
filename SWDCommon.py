@@ -1,3 +1,4 @@
+import sys
 import time
 
 class DebugPort:
@@ -11,8 +12,9 @@ class DebugPort:
         # read the IDCODE
         # Hugo: according to ARM DDI 0316D we should have 0x2B.. not 0x1B.., but 
         # 0x1B.. is what upstream used, so leave it in here...
-        if self.idcode() not in DebugPort.ID_CODES:
-            print "warning: unexpected idcode"
+        idcode = self.idcode()
+        if idcode not in DebugPort.ID_CODES:
+            print "warning: unexpected idcode: ", idcode
         # power shit up
         self.swd.writeSWD(False, 1, 0x54000000)
         if (self.status() >> 24) != 0xF4:
