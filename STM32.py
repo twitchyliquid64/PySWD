@@ -5,6 +5,7 @@ flash_base = 0x40023c00
 FLASH_PECR = flash_base+0x04
 FLASH_PEKEYR = flash_base+0x0C
 FLASH_PRGKEYR = flash_base+0x10
+FLASH_SR = flash_base+0x18
 
 class STM32:
     def __init__ (self, debugPort):
@@ -49,7 +50,7 @@ class STM32:
         v = ERASE | (PROG if prog else 0)
         self.ahb.writeWord(FLASH_PECR, v)
         # check the BSY flag
-        while (self.ahb.readWord(FLASH_PEKEYR) & 1) == 1:
+        while (self.ahb.readWord(FLASH_SR) & 1) == 1:
             print "waiting for erase completion..."
             time.sleep(0.01)
         self.ahb.writeWord(addr, 0x0)
