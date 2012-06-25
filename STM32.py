@@ -56,7 +56,7 @@ class STM32:
         self.ahb.writeWord(FLASH_PECR, 0x0)
 
     def flashProgram (self):
-        self.ahb.writeWord(FLASH_PECR, 1<<3)
+        pass
 
     def flashProgramEnd (self):
-        self.ahb.writeWord(FLASH_PECR, 0x0)
+        pass
