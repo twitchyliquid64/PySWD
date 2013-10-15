@@ -13,3 +13,7 @@ class SWDWaitError(Exception):
 class SWDParityError(Exception):
     "The target sent data with incorrect parity"
     pass
+class SWDNotPresentError(Exception):
+    "Target not present or does not respond"
+    pass
+
