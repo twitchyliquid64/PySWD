@@ -8,7 +8,7 @@ def load(optparser, options):
         logging.basicConfig(level=logging.DEBUG)
     mod_name = options.adapter
     mod = __import__(mod_name)
-    cls = getattr(mod, mod_name)
+    cls = mod.Adapter
     adapter = cls(options)
     return adapter
 

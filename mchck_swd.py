@@ -15,7 +15,7 @@ CMD_READ_BITS = 0x20
 CMD_CYCLE_CLOCK = 0x28
 
 
-class mchck_swd(SWDAdapterBase):
+class Adapter(SWDAdapterBase):
 
     def __init__(self, options):
         SWDAdapterBase.__init__(self)
