@@ -1,6 +1,11 @@
+import logging
+
+
 def load(optparser, options):
     if not options.adapter:
         optparser.error("--adapter must be specified")
+    if options.debug:
+        logging.basicConfig(level=logging.DEBUG)
     mod_name = options.adapter
     mod = __import__(mod_name)
     cls = getattr(mod, mod_name)
