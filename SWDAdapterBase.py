@@ -65,7 +65,7 @@ class SWDAdapterBase(object):
     def writeWordParity(self, val):
         par = self.calcParity(val)
         self.writeWord(val)
-        self.writeBite(val, 1)
+        self.writeBits(par, 1)
         self.log.debug("Written word %#x with parity %d", val, par)
 
     def readWordParity(self):
