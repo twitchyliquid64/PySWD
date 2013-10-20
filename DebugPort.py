@@ -22,19 +22,22 @@ class DebugPort:
 
     def __init__(self, swd):
         self.swd = swd
-        # read the IDCODE
+        # "After the host has transmitted a line request sequence to the
+        # SW-DP, it must read the IDCODE register." p.5-10
         idcode = self.idcode()
         if idcode not in DebugPort.ID_CODES:
             print "warning: unexpected idcode: ", idcode
-        # power up
-        self.swd.writeSWD(False, 1, 0x54000000)
-        if (self.status() >> 24) != 0xF4:
-            print "error powering up system"
-            sys.exit(1)
+        # Clear any sticky errors
+        self.abort(orunerr=True, wdataerr=True, stickyerr=True, stickycmp=True)
         # get the SELECT register to a known state
         self.select(0, 0)
         self.curAP = 0
         self.curBank = 0
+        # power up DAP
+        self.swd.writeCmd(OP_DP, REG_CTRL_STAT, 0x54000000)
+        s = self.status()
+        if (s >> 24) != 0xF4:
+            raise SWDInitError("Error powering up system, status: %#x" % s)
 
     def idcode(self):
         return self.swd.readCmd(OP_DP, REG_IDCODE)
