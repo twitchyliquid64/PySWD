@@ -92,7 +92,9 @@ class SWDAdapterBase(object):
         if ack != ACK_OK:
             self.turnClk()
             self.handleAck(ack)
-        return self.readWordParity()
+        val = self.readWordParity()
+        self.turnClk()
+        return val
 
     def handleAck(self, ack):
         if ack == ACK_WAIT:
