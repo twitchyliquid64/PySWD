@@ -3,7 +3,6 @@ import optparse
 
 import adapter_factory
 from SWDProtocol import *
-from SWDDebugPort import *
 
 
 optparser = optparse.OptionParser(usage='%prog [options]')
@@ -13,7 +12,10 @@ adapter_factory.add_options(optparser)
 adapter = adapter_factory.load(optparser, options)
 
 def readIDCODE(adapter):
-#    return adapter.readCmd(OP_DP, REG_IDCODE)
     return adapter.readSWD(0xa5)
 
-print hex(readIDCODE(adapter))
+#print hex(readIDCODE(adapter))
+
+import DebugPort
+dap = DebugPort.DebugPort(adapter)
+print hex(dap.idcode())
