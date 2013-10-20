@@ -7,6 +7,8 @@ def load(optparser, options):
     if options.debug:
         logging.basicConfig(level=logging.DEBUG)
     mod_name = options.adapter
+    if mod_name.endswith(".py"):
+        mod_name = mod_name[:-len(".py")]
     mod = __import__(mod_name)
     cls = mod.Adapter
     adapter = cls(options)
