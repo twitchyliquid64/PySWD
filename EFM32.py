@@ -27,10 +27,10 @@ class EFM32:
         # unlock main flash
         self.ahb.writeWord(0x400C0000 + 0x008, 0x00000001) # MSC_WRITECTL.WREN <- 1
 
-    def flashErase (self, flash_size):
+    def flashErase (self, flash_size, page_size):
         # erase page by page
         sys.stdout.write("   0.0 %") ; sys.stdout.flush()
-        for i in range(flash_size * 2): # page size is 512 bytes
+        for i in range(flash_size * 1024 / page_size): # page size is 512 or 1024
             self.ahb.writeWord(0x400C0000 + 0x010, 0x200 * i)  # MSC_ADDRB <- page address
             self.ahb.writeWord(0x400C0000 + 0x00C, 0x00000001) # MSC_WRITECMD.LADDRIM <- 1
             self.ahb.writeWord(0x400C0000 + 0x00C, 0x00000002) # MSC_WRITECMD.ERASEPAGE <- 1

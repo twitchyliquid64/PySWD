@@ -15,9 +15,10 @@ REG_ROUTESEL = 3 << 3   # Write, reserved
 class DebugPort:
 
     ID_CODES = (
-        0x1BA01477,  # EFM32
+        0x1BA01477,  # EFM32-cortex-M3
         0x2BA01477,  # STM32
         0x0BB11477,  # NUC1xx
+        0x0bc11477,  # EFM32-cortex-M0
         )
 
     def __init__(self, swd):
@@ -26,7 +27,7 @@ class DebugPort:
         # SW-DP, it must read the IDCODE register." p.5-10
         idcode = self.idcode()
         if idcode not in DebugPort.ID_CODES:
-            print "warning: unexpected idcode: ", idcode
+            print "warning: unexpected idcode: ", hex(idcode)
         # Clear any sticky errors
         self.abort(orunerr=True, wdataerr=True, stickyerr=True, stickycmp=True)
         # get the SELECT register to a known state

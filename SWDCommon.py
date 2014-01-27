@@ -6,6 +6,7 @@ class DebugPort:
         0x1BA01477, # EFM32
         0x2BA01477, # STM32
         0x0BB11477, # NUC1xx
+        0x0bc11477,  # EFM32-cortex-M0
         )
     def __init__ (self, swd):
         self.swd = swd
@@ -14,7 +15,7 @@ class DebugPort:
         # 0x1B.. is what upstream used, so leave it in here...
         idcode = self.idcode()
         if idcode not in DebugPort.ID_CODES:
-            print "warning: unexpected idcode: ", idcode
+            print "warning: unexpected idcode: ", hex(idcode)
         # power shit up
         self.swd.writeSWD(False, 1, 0x54000000)
         if (self.status() >> 24) != 0xF4:

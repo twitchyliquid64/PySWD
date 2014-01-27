@@ -17,7 +17,7 @@ def loadFile(path):
     return arr.tolist()
 
 def main():
-    busPirate = PirateSWD("/dev/tty.usbserial-buspirat", vreg = True)
+    busPirate = PirateSWD("/dev/ttyUSB0", vreg = True)
     debugPort = DebugPort(busPirate)
     efm32     = EFM32(debugPort)
 
@@ -26,10 +26,28 @@ def main():
     rev = (efm32.ahb.readWord(0xE00FFFE8) & 0xF0) | ((efm32.ahb.readWord(0xE00FFFEC) & 0xF0) >> 4) # PID2 and PID3 - see section 7.3.4 in reference manual
     rev = chr(rev + ord('A'))
     flash_size = mem_info & 0xFFFF
-    if (part_info >> 16 & 0xFF) == 71:
-        print "Connected."
+    family = part_info >> 16 & 0xFF
+    print "Connected."
+    page_size = 512
+    if family == 71:
         print "Part number: EFM32G%dF%d (rev %c, production ID %dd)" % (part_info & 0xFF, 
                 flash_size, rev, part_info >> 24 & 0xFF)
+    elif family == 72:
+        print "Part number: EFM32GG%dF%d (rev %c, production ID %dd)" % (part_info & 0xFF, 
+                flash_size, rev, part_info >> 24 & 0xFF)
+        raise Exception("TODO read page size")
+    elif family == 73:
+        print "Part number: EFM32TG%dF%d (rev %c, production ID %dd)" % (part_info & 0xFF, 
+                flash_size, rev, part_info >> 24 & 0xFF)
+        raise Exception("TODO read page size")
+    elif family == 74:
+        print "Part number: EFM32LG%dF%d (rev %c, production ID %dd)" % (part_info & 0xFF, 
+                flash_size, rev, part_info >> 24 & 0xFF)
+        raise Exception("TODO read page size")
+    elif family == 76:
+        print "Part number: EFM32ZG%dF%d (rev %c, production ID %dd)" % (part_info & 0xFF, 
+                flash_size, rev, part_info >> 24 & 0xFF)
+        page_size = 1024
     else:
         print "Warning: unknown part"
         sys.exit()
@@ -44,7 +62,7 @@ def main():
     efm32.halt()
     efm32.flashUnlock()
     print "Erasing Flash...",
-    efm32.flashErase(flash_size)
+    efm32.flashErase(flash_size, page_size)
     start_time = time.time()
     print "Programming Flash...",
     efm32.flashProgram(vals)
