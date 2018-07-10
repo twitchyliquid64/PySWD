@@ -6,15 +6,17 @@ class DebugPort:
         0x1BA01477, # EFM32
         0x2BA01477, # STM32
         0x0BB11477, # NUC1xx
+        0x0BC11477, # Cortex-M0+
         )
     def __init__ (self, swd):
         self.swd = swd
         # read the IDCODE
-        # Hugo: according to ARM DDI 0316D we should have 0x2B.. not 0x1B.., but 
+        # Hugo: according to ARM DDI 0316D we should have 0x2B.. not 0x1B.., but
         # 0x1B.. is what upstream used, so leave it in here...
         idcode = self.idcode()
         if idcode not in DebugPort.ID_CODES:
-            print "warning: unexpected idcode: ", idcode
+            print "warning: unexpected idcode: 0x%x" % idcode
+
         # power shit up
         self.swd.writeSWD(False, 1, 0x54000000)
         if (self.status() >> 24) != 0xF4:

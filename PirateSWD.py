@@ -1,16 +1,18 @@
+import math
 import serial
 
 from SWDErrors import *
 
 class PirateSWD:
-    def __init__ (self, f = "/dev/bus_pirate", vreg = False):
+    def __init__ (self, f = "/dev/bus_pirate", vreg = False, idleCycles = 1):
+        self.idleCycles = idleCycles
         self.port = serial.Serial(port = f, baudrate = 115200, timeout = 0.01)
         self.resetBP(vreg = vreg)
         self.sendBytes([0xFF] * 8)
         self.sendBytes([0x79, 0xE7]) # activate SWD interface
         self.resyncSWD()
 
-    def resetBP (self, vreg = False):
+    def resetBP (self, vreg = False, slow = False):
         self.expected = 9999
         self.clear()
         self.port.write(bytearray([0x0F]))
@@ -21,8 +23,9 @@ class PirateSWD:
         if self.port.read(4) != "RAW1":
             raise SWDInitError("error initializing bus pirate")
         if vreg:
-            self.port.write(bytearray([0x48]))  # enable voltage regulator output
-        self.port.write(bytearray([0x63,0x88])) # set speed to 400 kHz, enable output pins
+            self.port.write(bytearray([0x48]))  # enable voltage regulator output + 4 to enable pullups
+        self.port.write(bytearray([0x63])) # set speed to 400Khz
+        self.port.write(bytearray([0x88])) # enable output pins
         self.clear(9999)
 
     def tristatePins(self):
@@ -55,6 +58,10 @@ class PirateSWD:
         self.port.write(bytearray([0x10 + ((len(data) - 1) & 0x0F)] + data))
         self.expected = self.expected + 1 + len(data)
 
+    def injectIdleCycles(self):
+        for x in xrange(10):
+            self.sendBytes([0x00] * 8)
+
     def resyncSWD (self):
         self.sendBytes([0xFF] * 8)
         self.sendBytes([0x00] * 8)
@@ -80,7 +87,8 @@ class PirateSWD:
         if sum([bitCount(x) for x in data[0:4]]) % 2 != extra[0]:
             raise SWDParityError()
         # idle clocking to allow transactions to complete
-        self.sendBytes([0x00])
+        for x in xrange(int(math.ceil(self.idleCycles/8.0))):
+            self.sendBytes([0x00] * 8)
         # return the data
         return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]
 
@@ -110,6 +118,8 @@ class PirateSWD:
             payload[4] = 0x80
         # output the data, idle clocking is on the end of the payload
         self.sendBytes(payload)
+        for x in xrange(int(math.ceil(self.idleCycles/8.0))):
+            self.sendBytes([0x00] * 8)
 
 def bitCount(int_type):
     count = 0
