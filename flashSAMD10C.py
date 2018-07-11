@@ -10,6 +10,10 @@ SAMD_DSU_DID_OFFSET = 0x18
 SAMD_DSU_STATUSA_OFFSET = 0x1
 SAMD_DSU_STATUSB_OFFSET = 0x2
 
+SAMD_PORT_BASE = 0x41004400
+SAMD_PORT_DIRSET_OFFSET = 0x08
+SAMD_PORT_OUT_OFFSET = 0x10
+
 SAMD10_DEVICES = {
     0x7: {
         "name": "SAMD10C13A",
@@ -27,8 +31,8 @@ class SAMD10C(object):
 
     def device(self):
         devsel = self.deviceInfo()["devsel"]
-        if devsel in SAMD_DEVICES:
-            return SAMD_DEVICES[devsel]
+        if devsel in SAMD10_DEVICES:
+            return SAMD10_DEVICES[devsel]
 
     def deviceInfo(self):
         did = self.deviceID()
@@ -50,6 +54,10 @@ class SAMD10C(object):
         # Bits: 2 = bus-err, 3 = DSU failure, 4 = protection err
         return bool(statusa & 4) or bool(statusa & 8) or bool(statusa & 16)
 
+    def setGPIO(self, paPin):
+        self.ahb.writeWord(SAMD_PORT_BASE + SAMD_PORT_DIRSET_OFFSET, 1 << paPin)
+        self.ahb.writeWord(SAMD_PORT_BASE + SAMD_PORT_OUT_OFFSET, 1 << paPin)
+
 def main():
     busPirate = PirateSWD("/dev/ttyUSB0", True, 2)
     debugPort = DebugPort(busPirate)
@@ -65,6 +73,8 @@ def main():
     if uc.checkDSUErr():
         print "DSU is reporting an error!"
         print uc.statusa()
+
+    uc.setGPIO(24)
 
 if __name__ == "__main__":
     main()
