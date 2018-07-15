@@ -103,6 +103,20 @@ class MEM_AP:
         self.dp.writeAP(self.apsel, 0x0C, data)
         return self.dp.readRB()
 
+    def readByte (self, adr):
+        self.csw(0, 0)
+        self.dp.writeAP(self.apsel, 0x04, adr)
+        self.dp.readAP(self.apsel, 0x0C)
+        val = self.dp.readRB()
+        self.csw(1, 2) # 32-bit auto-incrementing addressing
+        return val & 0xFF
+
+    def writeByte (self, adr, data):
+        self.csw(1, 0)
+        self.dp.writeAP(self.apsel, 0x04, adr)
+        self.dp.writeAP(self.apsel, 0x0C, data, ignore = True)
+        self.csw(1, 2) # 32-bit auto-incrementing addressing
+
     def readBlock (self, adr, count):
         self.dp.writeAP(self.apsel, 0x04, adr)
         vals = [self.dp.readAP(self.apsel, 0x0C) for off in range(count)]
